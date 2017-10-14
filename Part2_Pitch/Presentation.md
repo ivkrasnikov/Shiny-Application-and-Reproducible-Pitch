@@ -1,8 +1,19 @@
+<style>
+body {
+    overflow: scroll;
+}
+
+.small-code pre code {
+  font-size: 1em;
+}
+
+</style>
+
 SBERBANK Opendata plotter
 ========================================================
 author: Ilya Krasnikov
-date: 03.08.2017
-autosize: true
+date: 13.10.2017
+autosize: True
 
 Overview
 ========================================================
@@ -11,10 +22,7 @@ This presentation was prepared for the **Course Project: Shiny Application and R
 
 The shiny app developed for this assignment is avalilable: https://drpooh.shinyapps.io/Sberbank_Opendata/
 
-The source codes of ui.R and server.R and also Rpresentation are available on the GitHub repo: https://github.com/ivkrasnikov/Shiny-Application-and-Reproducible-Pitch/
-
-Introduction
-========================================================
+The source codes of ui.R and server.R and also R Presentation are available on the GitHub repo: https://github.com/ivkrasnikov/Shiny-Application-and-Reproducible-Pitch/
 
 Sberbank occupies 40% to 90% of the financial services market, depending on the region and product in Russia. It analyze data on 140 million private and 1.5 million corporate customers.
 "Big Data" of Sberbank is information about partial economic processes taking place in the country. For the first time, these data become available at [Opendata Sberbank](http://www.sberbank.com/ru/opendata) and [Official site on English](http://www.sberbank.com)
@@ -29,94 +37,48 @@ Available data
 * Mobility of the population at home and abroad
 * The share of expenses for food, housing and communal services, transport and other items
 
-ui.R code
-========================================================
-
-
-```r
-library(shiny)
-shinyUI(fluidPage(
-  titlePanel("Sberbank Open Data"),
-  sidebarLayout(
-    sidebarPanel(
-      uiOutput("region"),
-      uiOutput("rname"),
-      uiOutput("period")
-    ),
-    # Show a plot of the generated distribution
-    mainPanel(
-      h3(textOutput("text1")),
-      plotlyOutput("distPlot")
-    )
-  ))
-)
-```
-
-server.R code
-========================================================
-
-
-```r
-library(shiny)
-library(plotly)
-library(lubridate)
-
-shinyServer(function(input, output) {
-  data <- read.csv("opendata.csv", sep = ',', quote = '"', dec = '.', stringsAsFactors = FALSE)
-  data$date <- as.Date(data$date, "%Y-%m-%d")
-  
-  output$region <- renderUI({
-    selectInput("region", "Choose a region:", as.list(unique(data$region)), selected = levels(data$region)[60] ) 
-  })
-  
-  output$rname <- renderUI({
-    selectInput("rname", "Choose a variable:", as.list(unique(data$name)), selected = levels(data$name)[1]) 
-  })  
-  
-  output$text1 <- renderText({ 
-    paste("You have selected: ", input$rname, " in ", input$region)
-  })
-  
-  output$period <- renderUI({
-    radioButtons("period", "Choose a period:", 
-                c("Month"="mon",
-                  "Year" = "year",
-                  "From the year begin" = "yearbegin",
-                  "All the time" = "all"),
-                selected = "all")
-  })
-  
-  output$distPlot <- renderPlotly({
-    if (input$period == "all")
-    {
-      dt <- data[data$region == input$region & data$name == input$rname, ]
-    }
-    if (input$period == "yearbegin")
-    {
-      d <- as.Date('2017-01-01')
-      dt <- data[data$region == input$region & data$name == input$rname & data$date >= d, ]
-    }
-    if (input$period == "year")
-    {
-      d <- as.Date('2017-04-14')
-      d <- d %m+% years(-1)
-      dt <- data[data$region == input$region & data$name == input$rname & data$date >= d, ]
-    }
-    if (input$period == "mon")
-    {
-      d <- as.Date('2017-04-14')
-      d <- d %m+% months(-1)
-      dt <- data[data$region == input$region & data$name == input$rname & data$date >= d, ]
-    }
-    
-    plot_ly(x=~date, y=~value, data=dt, type = 'scatter', mode = 'lines')
-  })
-})
-```
-
-Sample Grafic generated from the app
-========================================================
+***
+The app has several inputs to manipulate the data and plot. A user can select a measurement, region and period. 
 
 ![Main screenshot](Presentation-figure/sample.png)
 
-Here is the screenshot of a sample analysis performed with the shiny app. The app has several inputs to manipulate the data and plot. A user can select a measurement, region and period. 
+How it works
+========================================================
+
+The app has several inputs to manipulate the data and plot. A user can select a measurement, region and period.
+* Select a region of interest
+* Select a variable (information about partial economic processes)
+* Select a period of interest:
+  + Date range - specifies the begining date and end dates of showing data.
+  + Years - a slider that specifies the years of showing data.
+  + From the year begin - a slider that specifies from the begin of which year to show the data.
+  + Finally, All the time - showing the data for all the time.
+
+The user also could select an approximation model for the showing data:
+* Auto - the plot generates an approximation curve automatically
+* Linear model - the plot generates Linear approximation model curve
+* Poly model - the plot generates polynom model curve for the presented data
+
+The R code
+========================================================
+class: small-code
+
+In this slide we show how to include R code embedded in the slide.
+As the data store in exteral file, let use R library.
+The App uses ggplot tool for plotting the data, like following 
+
+
+
+```r
+library(ggplot2)
+data('mtcars')
+
+qplot(wt, mpg, data=mtcars, geom=c("point", "smooth"),
+   method="lm", formula=y~x, color=cyl,
+   main="Regression of MPG on Weight",
+   xlab="Weight", ylab="Miles per Gallon")
+```
+
+![plot of chunk unnamed-chunk-1](Presentation-figure/unnamed-chunk-1-1.png)
+
+
